@@ -66,7 +66,9 @@ class InspectorPanel(Panel.Panel):
         scroll_area = self.ui.create_scroll_area_widget(properties)
         scroll_area.set_scrollbar_policies("off", "needed")
         scroll_area.on_focus_changed = scroll_area_focus_changed
-        self.column = self.ui.create_column_widget()
+        # DMH 20191108:
+        self.column = self.ui.create_column_widget(properties={"stylesheet" : "background-color: #FFF2EC"})
+        #self.column = self.ui.create_column_widget()
         scroll_area.content = self.column
         self.widget = scroll_area
 
@@ -494,9 +496,9 @@ class InfoInspectorSection(InspectorSection):
         self.caption_static_column.add(self.caption_static_button_row)
         self.caption_static_column.add_stretch()
 
-        self.caption_editable_column = self.ui.create_column_widget()
+        self.caption_editable_column = self.ui.create_column_widget(properties={"color" : "white"})
         self.caption_editable_text = self.ui.create_text_edit_widget(properties={"height": 60})
-        self.caption_editable_button_row = self.ui.create_row_widget()
+        self.caption_editable_button_row = self.ui.create_row_widget(properties={"color" : "white"})
         self.caption_editable_save_button = self.ui.create_push_button_widget(_("Save"))
         self.caption_editable_cancel_button = self.ui.create_push_button_widget(_("Cancel"))
         def end_caption_edit():

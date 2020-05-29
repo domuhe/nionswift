@@ -45,6 +45,8 @@ import threading
 import typing
 import uuid as uuid_module
 import weakref
+### DMH
+import logging
 
 # third party libraries
 import numpy
@@ -586,6 +588,7 @@ class UserInterface:
         raise NotImplemented()
 
     def create_combo_box_widget(self, items=None, item_text_getter=None):
+        #DMH logging.info("Facade.create_combo_box_widget called with items:  " + str(items))
         combo_box_widget = ComboBoxWidget(self.__ui)
         combo_box_widget.item_text_getter = item_text_getter
         combo_box_widget.items = items if items is not None else list()
