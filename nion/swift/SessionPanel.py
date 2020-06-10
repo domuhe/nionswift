@@ -52,7 +52,7 @@ class SessionPanel(Panel.Panel):
             [_("Sample Area"), _("Sample Area Description"), "sample_area"],
         ]
 
-        widget = self.ui.create_column_widget()
+        widget = self.ui.create_column_widget(properties={"stylesheet" : "background-color: #FFFFEC"})
 
         intro_row = self.ui.create_row_widget()
         intro_row.add_stretch()
@@ -68,6 +68,7 @@ class SessionPanel(Panel.Panel):
         widget.add_spacing(8)
         for field_description in field_descriptions:
             title, placeholder, field_id = field_description
+            #DMH 20191108:
             row = self.ui.create_row_widget()
             row.add_spacing(8)
             row.add(self.ui.create_label_widget(title, properties={"width": 100}))
