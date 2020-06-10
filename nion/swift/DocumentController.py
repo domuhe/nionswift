@@ -60,6 +60,9 @@ from nion.utils import Selection
 if typing.TYPE_CHECKING:
     from nion.swift import Application
 
+###DMH
+from nion.swift import ToolbarPanel
+
 
 _ = gettext.gettext
 
@@ -91,6 +94,15 @@ class DocumentController(Window.Window):
         self.document_model = document_model
         self.document_model.add_ref()
         self.title = _("Nion Swift")
+# DMH 200610: commented out after merge
+#        if app:
+#
+#            workspace_dir = app.workspace_dir
+#            workspace_name = os.path.splitext(os.path.split(workspace_dir)[1])[0] if workspace_dir else _("Workspace")
+#            self.title = "{0} SuperSTEM Workspace - {1}".format(_("Nion Swift"), workspace_name)
+#        else:
+#            self.title = _("Nion Swift")
+
         self.__workspace_controller = None
         self.replaced_display_panel_content = None  # used to facilitate display panel functionality to exchange displays
         self.__weak_selected_display_panel = None
@@ -166,6 +178,10 @@ class DocumentController(Window.Window):
         self.__consoles = list()
 
         self._create_menus()
+        #logging.info("DocumentController __init__ - workspace_id = " + str(workspace_id))
+        #logging.info("DocumentController __init__ - workspace_name = " + str(workspace_name))
+        #logging.info("DocumentController __init__ - workspace_dir= " + str(workspace_dir))
+        
         if workspace_id:  # used only when testing reference counting
             self.__workspace_controller = Workspace.Workspace(self, workspace_id)
             self.__workspace_controller.restore(self.document_model.workspace_uuid)
@@ -271,12 +287,17 @@ class DocumentController(Window.Window):
 
         self.build_menu(None, menu_descriptions)
 
+
         self.__data_menu_actions = list()
 
         self.__dynamic_live_actions = []
 
+        # DMH 200610: cut out own bits due to merge conflicts
+
         self.__dynamic_view_actions = []
 
+        # DMH 200610: cut out my own bits due to merge conflicts
+        
         self.__dynamic_window_actions = []
 
     def get_menu(self, menu_id):
@@ -606,6 +627,8 @@ class DocumentController(Window.Window):
         if self.selected_display_panel == display_panel:
             self.selected_display_panel = None
 
+
+                        
     @property
     def selected_display_panel(self):
         return self.__weak_selected_display_panel() if self.__weak_selected_display_panel else None
@@ -645,6 +668,7 @@ class DocumentController(Window.Window):
 
     def new_window_with_data_item(self, workspace_id, display_item=None):
         # hack to work around Application <-> DocumentController interdependency.
+        logging.info("new_window_with_data_item workspace_id: " + workspace_id)
         self.create_new_document_controller_event.fire(self.document_model, workspace_id, display_item)
 
     def _handle_new_project(self) -> None:
@@ -2123,7 +2147,6 @@ class DocumentController(Window.Window):
         def process() -> DataItem.DataItem:
             new_data_item = fn(display_item, crop_graphic)
             if new_data_item:
-                new_display_item = self.document_model.get_display_item_for_data_item(new_data_item)
                 self.show_display_item(new_display_item)
             return new_data_item
         command = self.create_insert_data_item_command(process)
@@ -2144,7 +2167,9 @@ class DocumentController(Window.Window):
         return None
 
     def _change_to_previous_workspace(self):
+        #logging.info("__change_to_previous_workspace called")
         if self.workspace_controller:
+            #logging.info("__change_to_previous_workspace called")
             self.workspace_controller.change_to_previous_workspace()
 
     def _change_to_next_workspace(self):
@@ -2154,6 +2179,16 @@ class DocumentController(Window.Window):
     def _create_workspace(self):
         if self.workspace_controller:
             self.workspace_controller.create_workspace()
+    
+    ### DMH 20191115:            
+    def __create_xpanels_workspace(self, number_panels):
+        #logging.info("__create_xpanels_workspace called")
+        if self.workspace_controller:
+            #logging.info("__create_xpanels_workspace, no: " + str(number_panels))
+            self.workspace_controller.create_xpanels_workspace(number_panels)
+            # update ToolbarPanel.workspace_list_items
+            logging.info("dir(ToolbarPanel.ToolbarPanel" + str(dir(ToolbarPanel.ToolbarPanel)))
+            #notworkingToolbarPanel.ToolbarPanel.update_workspace_list_combobox(self, "new")
 
     def _rename_workspace(self):
         if self.workspace_controller:
@@ -2166,6 +2201,8 @@ class DocumentController(Window.Window):
     def _clone_workspace(self):
         if self.workspace_controller:
             self.workspace_controller.clone_workspace()
+
+
 
     def toggle_filter(self):
         if self.workspace_controller.filter_row.visible:
@@ -2367,7 +2404,23 @@ class DocumentController(Window.Window):
         menu = self.create_context_menu()
 
         def show_in_new_window():
+            ### DMH 20191118 changed to open data item in a NEW single panel workspace instead of a duplicate of the current workspace
+            # determine current workspace object by iterating over workspaces and comparing uuids to workspace_uuid (don't know a better way yet)
+            #logging.info("show_in_new_window workspace_uuid = " + str(self.document_model.workspace_uuid))
+            for workspace in self.document_model.workspaces:
+                # set current_workspace to the workspace that has workspace_uuid
+                if workspace.uuid == self.document_model.workspace_uuid:
+                    current_workspace = workspace
+                #logging.info("workspace : "  + str(workspace.name) + " " + str(workspace.uuid))                       
+
+            #logging.info("show_in_new_window current workspace " + str(current_workspace))
+            #create new single panel workspace
+            self.__create_xpanels_workspace(1)
+            # then open selected data item in the new workspace in new window
             self.new_window_with_data_item("data", display_item=display_item)
+            ## change main window back to previous workspace            
+            self.workspace_controller.change_workspace(current_workspace)
+            ### end DMH
 
         if display_item is not None:
             menu.add_menu_item(_("Open in New Window"), show_in_new_window)
@@ -2377,9 +2430,12 @@ class DocumentController(Window.Window):
         if display_item:
 
             def show():
+                logging.info("def show called, display_item: " + str(display_item))
                 self.select_display_items_in_data_panel([display_item])
 
-            menu.add_menu_item(_("Reveal"), show)
+            # DMH 2019114: added dummy key_sequence so that it shows up in the context menu, BUT this is not working by itself
+            # instead a dummy View Menu item has been created about which has the same key_sequence.
+            menu.add_menu_item(_("Reveal"), show, key_sequence="r")
 
             # when exporting, queue the task so that the pop-up is allowed to close before the dialog appears.
             # without queueing, it originally led to a crash (tested in Qt 5.4.1 on Windows 7).

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 # standard libraries
 import contextlib
-import copy
 import functools
 import gettext
 import math
@@ -12,6 +11,9 @@ import threading
 import typing
 import uuid
 import weakref
+#DMH 20191108:
+import logging
+#from nion.swift import DocumentController
 
 from nion.swift import DataItemThumbnailWidget
 from nion.swift import DataPanel
@@ -22,7 +24,6 @@ from nion.swift import MimeTypes
 from nion.swift import Panel
 from nion.swift import Thumbnails
 from nion.swift import Undo
-from nion.swift import Inspector
 from nion.swift.model import DataItem
 from nion.swift.model import DisplayItem
 from nion.swift.model import DocumentModel
@@ -144,7 +145,6 @@ class DisplayPanelOverlayCanvasItem(CanvasItem.CanvasItemComposition):
         self.on_drag_enter = None
         self.on_drag_leave = None
         self.on_drag_move = None
-        self.on_wants_drag_event = None
         self.on_drop = None
         self.on_key_pressed = None
         self.on_key_released = None
@@ -263,6 +263,7 @@ class DisplayPanelOverlayCanvasItem(CanvasItem.CanvasItemComposition):
         return False
 
     def drag_enter(self, mime_data: UserInterface.MimeData) -> str:
+
         self.__is_dragging = True
         self.__set_drop_region("none")
         if self.on_drag_enter:
@@ -745,7 +746,8 @@ class AppendDisplayDataChannelCommand(Undo.UndoableCommand):
     def _undo(self):
         display_item = self.__display_item_proxy.item
         display_data_channel = display_item.display_data_channels[self.__display_data_channel_index]
-        display_item.remove_display_data_channel(display_data_channel, safe=True)
+        self.__undelete_logs = list()
+        self.__undelete_logs.append(display_item.remove_display_data_channel(display_data_channel, safe=True))
         display_item.restore_properties(self.__old_properties)
 
     def _redo(self):
@@ -794,7 +796,6 @@ class ChangeDisplayDataChannelCommand(Undo.UndoableCommand):
 
     def can_merge(self, command: Undo.UndoableCommand) -> bool:
         return isinstance(command, ChangeDisplayDataChannelCommand) and self.command_id and self.command_id == command.command_id and self.__display_data_channel_proxy.item == command.__display_data_channel_proxy.item
-
 
 class MoveDisplayLayerCommand(Undo.UndoableCommand):
 
@@ -1091,11 +1092,6 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
                 return workspace_controller.handle_drag_move(self, mime_data, x, y)
             return "ignore"
 
-        def wants_drag_event(mime_data):
-            if workspace_controller:
-                return workspace_controller.should_handle_drag_for_mime_data(mime_data)
-            return False
-
         def drop(mime_data, region, x, y):
             if workspace_controller:
                 return workspace_controller.handle_drop(self, mime_data, region, x, y)
@@ -1105,7 +1101,6 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
         self.__content_canvas_item.on_drag_enter = drag_enter
         self.__content_canvas_item.on_drag_leave = drag_leave
         self.__content_canvas_item.on_drag_move = drag_move
-        self.__content_canvas_item.on_wants_drag_event = wants_drag_event
         self.__content_canvas_item.on_drop = drop
         self.__content_canvas_item.on_key_pressed = self._handle_key_pressed
         self.__content_canvas_item.on_key_released = self._handle_key_released
@@ -1486,6 +1481,7 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
         is_focused = self._is_focused()
 
         display_panel_type = d.get("display-panel-type", "data-display-panel")
+        #logging.info("__chagne_display_panel_content, display_panel_type: " + str(display_panel_type))
         if display_panel_type == "thumbnail-browser-display-panel":
             d["browser_type"] = "horizontal"
         elif display_panel_type == "browser-display-panel":
@@ -1493,14 +1489,15 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
         elif display_panel_type == "empty-display-panel":
             d["browser_type"] = "empty"
 
+        #logging.info("__change_display_panel_content, d: " + str(d))
         self.restore_contents(d)
 
         self.set_selected(is_selected)
 
-        if is_focused:
+        if is_focused:            
             self.request_focus()
 
-        if is_selected:
+        if is_selected:            
             document_controller.notify_focused_display_changed(self.__display_item)
 
         if callable(self.on_contents_changed):
@@ -1610,6 +1607,75 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
     def __begin_drag(self, mime_data, thumbnail_data):
         self.drag(mime_data, thumbnail_data, drag_finished_fn=functools.partial(self._drag_finished, self.__document_controller))
 
+    # from the canvas item directly. dispatches to the display canvas item. if the display canvas item
+    # doesn't handle it, gives the display controller a chance to handle it.
+    def _handle_key_pressed(self, key):
+        #DMH:
+        document_controller = self.__document_controller
+        workspace_controller = document_controller.workspace_controller
+        #endDMH
+        display_canvas_item = self.display_canvas_item
+        if display_canvas_item and display_canvas_item.key_pressed(key):
+            return True
+        if self.__display_panel_controller and self.__display_panel_controller.key_pressed(key):
+            return True
+        if self.__display_panel_controller is None:
+            # cycle views is only valid if there is no display_panel_controller
+            if key.text == "v":
+                self.__cycle_display()
+                return True
+           ###DMH 20191108: creating keyboard shortcuts to display item context menu actions (quick and dirty):
+           # for some reasons PyQT5 doesn't have working context menu shortcuts
+            elif key.text == "c":
+                logging.info("key c pressed in DisplayPanel._handle_key_pressed")
+                d = {"type": "image", "display-panel-type": "empty-display-panel"}
+                command = ReplaceDisplayPanelCommand(workspace_controller)
+                self.change_display_panel_content(d)
+                document_controller.push_undo_command(command)                
+                return True
+            elif key.text == "t":
+                # split current (in focus) display panel (self) vertically
+                logging.info("key t pressed in DisplayPanel._handle_key_pressed")  
+                def split_vertical():      
+                    if workspace_controller:
+                        command = workspace_controller.insert_display_panel(self, "bottom")
+                        document_controller.push_undo_command(command) 
+                    logging.info("sstem_split_vertical called")                                  
+                    return True
+                split_vertical()
+                return True
+            elif key.text == "h":
+                # split current (in focus) display panel (self) horizontally
+                logging.info("key h pressed in DisplayPanel._handle_key_pressed")  
+                def split_horizontal():                    
+                    if workspace_controller:
+                        # some display panel related output to get to grips with display panel attributes:
+                        logging.info("len(workspace_controller.display_panels): " + str(len(workspace_controller.display_panels)))
+                        logging.info("workspace_controller.display_panels[0]: " + str(workspace_controller.display_panels[0]) + " " + str(workspace_controller.display_panels[0].identifier))
+                        logging.info("display_panels: " + str(workspace_controller.display_panels))
+                        ## list all display panels:
+                        #for display_panel in workspace_controller.display_panels:
+                        #    logging.info("display panel identifier: " + str(display_panel.identifier) + " uuid: " + str(display_panel.uuid) + " is_focused: " + str(display_panel.__content_canvas_item.focused))                   
+                        command = workspace_controller.insert_display_panel(self, "right")
+                        document_controller.push_undo_command(command) 
+                    logging.info("split_horizontal called")                                  
+                    return True
+                split_horizontal()
+                return True
+            elif key.text == "d":
+                # delete the current (in focus) display panel (self), NOT the data item displayed therein!
+                logging.info("key d pressed in DisplayPanel._handle_key_pressed")                  
+                if workspace_controller:
+                    command = workspace_controller.remove_display_panel(self)
+                    document_controller.push_undo_command(command)                                
+                    logging.info("deleted display panel")
+                return True
+#            elif key.text == "r": can't get it to work from here, instead added a dummy View Menu item for "Reveal" in DocumentController.py and assigned key_squence "R"
+            ###DMH end
+            if self.document_controller.perform_display_panel_command(key):
+                return True
+        return DisplayPanelManager().key_pressed(self, key)
+
     def __cycle_display(self):
         # the second part of the if statement below handles the case where the data item has been changed by
         # the user so the cycle should go back to the main display.
@@ -1651,23 +1717,6 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
 
     # from the canvas item directly. dispatches to the display canvas item. if the display canvas item
     # doesn't handle it, gives the display controller a chance to handle it.
-    def _handle_key_pressed(self, key):
-        display_canvas_item = self.display_canvas_item
-        if display_canvas_item and display_canvas_item.key_pressed(key):
-            return True
-        if self.__display_panel_controller and self.__display_panel_controller.key_pressed(key):
-            return True
-        if self.__display_panel_controller is None:
-            # cycle views is only valid if there is no display_panel_controller
-            if key.text == "v":
-                self.__cycle_display()
-                return True
-        if self.document_controller.perform_display_panel_command(key):
-            return True
-        return DisplayPanelManager().key_pressed(self, key)
-
-    # from the canvas item directly. dispatches to the display canvas item. if the display canvas item
-    # doesn't handle it, gives the display controller a chance to handle it.
     def _handle_key_released(self, key):
         display_canvas_item = self.display_canvas_item
         if display_canvas_item and display_canvas_item.key_released(key):
@@ -1677,7 +1726,7 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
         return DisplayPanelManager().key_released(self, key)
 
     def show_context_menu(self, menu, gx, gy):
-
+        document_controller = self.__document_controller
         workspace_controller = self.__document_controller.workspace_controller
 
         def split_vertical():
@@ -1689,10 +1738,17 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
             if workspace_controller:
                 command = workspace_controller.insert_display_panel(self, "right")
                 self.__document_controller.push_undo_command(command)
+        ###DMH 20191114: added
+        def delete_display_panel():
+            if workspace_controller:
+                command = workspace_controller.remove_display_panel(self)
+                document_controller.push_undo_command(command) 
 
         menu.add_separator()
-        menu.add_menu_item(_("Split Into Top and Bottom"), split_vertical)
-        menu.add_menu_item(_("Split Into Left and Right"), split_horizontal)
+        menu.add_menu_item(_("Split Into Top and Bottom"), split_vertical, key_sequence="t")  # DMH key-sequence in context menu don't seem to work 
+        menu.add_menu_item(_("Split Into Left and Right"), split_horizontal, key_sequence="h")
+        ###DMH 20191114:
+        menu.add_menu_item(_("Delete Display Panel"), delete_display_panel, key_sequence="d")
         menu.add_separator()
         DisplayPanelManager().build_menu(menu, self.__document_controller, self)
         menu.popup(gx, gy)
@@ -1841,15 +1897,10 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
             if _test_log_exceptions:
                 import traceback
                 traceback.print_exc()
-        position_and_value_text = []
-        if position_text:
-            position_and_value_text.append(_("Position: ") + position_text)
-        if value_text:
-            position_and_value_text.append(_("Value: ") + value_text)
-        if len(position_text) == 0:
-            self.__document_controller.cursor_changed(None)
+        if position_text and value_text:
+            self.__document_controller.cursor_changed([_("Position: ") + position_text, _("Value: ") + value_text])
         else:
-            self.__document_controller.cursor_changed(position_and_value_text)
+            self.__document_controller.cursor_changed(None)
 
     def drag_graphics(self, graphics):
         display_item = self.display_item
@@ -2071,11 +2122,27 @@ class DisplayPanelManager(metaclass=Utility.Singleton):
 
     def switch_to_display_content(self, document_controller, display_panel: DisplayPanel, display_panel_type, display_item: DisplayItem.DisplayItem = None):
         d = {"type": "image", "display-panel-type": display_panel_type}
+        #logging.info("switch_to_display_content: display_panel " + str(display_panel.identifier) + " type " + str(display_panel_type) )
         if display_item and display_panel_type != "empty-display-panel":
+            # new in ver > 0.14.8
             d["display_item_specifier"] = display_item.project.create_specifier(display_item, allow_partial=False).write()
+            # DMH 200610: left old display_item_uuid in after merge
+            logging.info("switch_to_display_content: has display_item!")
+            d["display_item_uuid"] = str(display_item.uuid)
+        #logging.info("switch_to_display_content: d: " + str(d))
         command = ReplaceDisplayPanelCommand(document_controller.workspace_controller)
         display_panel.change_display_panel_content(d)
         document_controller.push_undo_command(command)
+
+    ### DMH 20191119: added my own method for clearing all display panels, as I couldn't figure out what to pass as document_controller from DocumentController.py        
+    def clear_display_content(display_panel: DisplayPanel, display_item: DisplayItem.DisplayItem = None):
+        
+        d = {"type": "image", "display-panel-type": "empty-display-panel"}
+        #logging.info("switch_to_display_content: display_panel " + str(display_panel) + " type " + str(display_panel_type) )
+        #logging.info("switch_to_display_content: d: " + str(d))
+        # don't care about undo here:
+        display_panel.change_display_panel_content(d)
+    ### end DMH
 
     def build_menu(self, display_type_menu, document_controller, display_panel):
         """Build the dynamic menu for the selected display panel.
@@ -2092,10 +2159,12 @@ class DisplayPanelManager(metaclass=Utility.Singleton):
         def switch_to_display_content(display_panel_type):
             self.switch_to_display_content(document_controller, display_panel, display_panel_type, display_panel.display_item)
 
-        empty_action = display_type_menu.add_menu_item(_("Clear Display Panel"), functools.partial(switch_to_display_content, "empty-display-panel"))
+        #DMH 20191108: added key_sequence (is not adhered to automatically, instead have created key_press action above)
+        empty_action = display_type_menu.add_menu_item(_("Clear Display Panel"), functools.partial(switch_to_display_content, "empty-display-panel"), key_sequence="c")
         display_type_menu.add_separator()
 
-        data_item_display_action = display_type_menu.add_menu_item(_("Display Item"), functools.partial(switch_to_display_content, "data-display-panel"))
+        #DMH 20191108: added key_sequence
+        data_item_display_action = display_type_menu.add_menu_item(_("Display Item"), functools.partial(switch_to_display_content, "data-display-panel"), key_sequence="v")
         thumbnail_browser_action = display_type_menu.add_menu_item(_("Thumbnail Browser"), functools.partial(switch_to_display_content, "thumbnail-browser-display-panel"))
         grid_browser_action = display_type_menu.add_menu_item(_("Grid Browser"), functools.partial(switch_to_display_content, "browser-display-panel"))
         display_type_menu.add_separator()
