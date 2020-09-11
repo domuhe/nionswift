@@ -464,7 +464,7 @@ class InfoInspectorSection(InspectorSection):
         # title
         self.info_section_title_row = self.ui.create_row_widget()
         self.info_section_title_row.add(self.ui.create_label_widget(_("Title"), properties={"width": 60}))
-        self.info_title_label = self.ui.create_line_edit_widget()
+        self.info_title_label = self.ui.create_line_edit_widget(properties={"stylesheet": "background-color: white"})
         self.info_title_label.bind_text(ChangeDisplayItemPropertyBinding(document_controller, display_item, "title"))
         self.info_section_title_row.add(self.info_title_label)
         self.info_section_title_row.add_spacing(8)
@@ -478,7 +478,7 @@ class InfoInspectorSection(InspectorSection):
         self.caption_edit_stack = self.ui.create_stack_widget()
 
         self.caption_static_column = self.ui.create_column_widget()
-        self.caption_static_text = self.ui.create_text_edit_widget(properties={"height": 60})
+        self.caption_static_text = self.ui.create_text_edit_widget(properties={"height": 60, "stylesheet": "background-color: white"})
         self.caption_static_text.editable = False
         caption_binding = Binding.PropertyBinding(display_item, "caption")
         caption_binding.source_setter = None

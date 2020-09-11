@@ -52,7 +52,7 @@ class SessionPanel(Panel.Panel):
             [_("Sample Area"), _("Sample Area Description"), "sample_area"],
         ]
 
-        widget = self.ui.create_column_widget(properties={"stylesheet" : "background-color: #FFFFEC"})
+        widget = self.ui.create_column_widget(properties={"stylesheet" : "background-color: #FFE9EF"})
 
         intro_row = self.ui.create_row_widget()
         intro_row.add_stretch()
@@ -72,7 +72,8 @@ class SessionPanel(Panel.Panel):
             row = self.ui.create_row_widget()
             row.add_spacing(8)
             row.add(self.ui.create_label_widget(title, properties={"width": 100}))
-            line_edit_widget = self.ui.create_line_edit_widget(properties={"width": 200})
+            line_edit_widget = self.ui.create_line_edit_widget(properties={"width": 200, "stylesheet": "background-color: white"})
+            #line_edit_widget.set_property("stylesheet", "background-color: white")
             line_edit_widget.placeholder_text = placeholder
             line_edit_widget.on_editing_finished = functools.partial(line_edit_changed, line_edit_widget, field_id)
             field_line_edit_widget_map[field_id] = line_edit_widget
