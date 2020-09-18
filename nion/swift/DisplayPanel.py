@@ -1377,10 +1377,10 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
 
         self.set_selected(is_selected)
 
-        if is_focused:            
+        if is_focused:
             self.request_focus()
 
-        if is_selected:            
+        if is_selected:
             document_controller.notify_focused_display_changed(self.__display_item)
 
         if callable(self.on_contents_changed):
@@ -1505,48 +1505,48 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
            ###DMH 20191108: creating keyboard shortcuts to display item context menu actions (quick and dirty):
            # for some reasons PyQT5 doesn't have working context menu shortcuts
             elif key.text == "c":
-                logging.info("key c pressed in DisplayPanel._handle_key_pressed")
+                #logging.info("key c pressed in DisplayPanel._handle_key_pressed")
                 d = {"type": "image", "display-panel-type": "empty-display-panel"}
                 command = ReplaceDisplayPanelCommand(workspace_controller)
                 self.change_display_panel_content(d)
-                document_controller.push_undo_command(command)                
+                document_controller.push_undo_command(command)
                 return True
             elif key.text == "t":
                 # split current (in focus) display panel (self) vertically
-                logging.info("key t pressed in DisplayPanel._handle_key_pressed")  
-                def split_vertical():      
+                #logging.info("key t pressed in DisplayPanel._handle_key_pressed")
+                def split_vertical():
                     if workspace_controller:
                         command = workspace_controller.insert_display_panel(self, "bottom")
-                        document_controller.push_undo_command(command) 
-                    logging.info("sstem_split_vertical called")                                  
+                        document_controller.push_undo_command(command)
+                    #logging.info("sstem_split_vertical called")
                     return True
                 split_vertical()
                 return True
             elif key.text == "h":
                 # split current (in focus) display panel (self) horizontally
-                logging.info("key h pressed in DisplayPanel._handle_key_pressed")  
-                def split_horizontal():                    
+                #logging.info("key h pressed in DisplayPanel._handle_key_pressed")
+                def split_horizontal():
                     if workspace_controller:
                         # some display panel related output to get to grips with display panel attributes:
-                        logging.info("len(workspace_controller.display_panels): " + str(len(workspace_controller.display_panels)))
-                        logging.info("workspace_controller.display_panels[0]: " + str(workspace_controller.display_panels[0]) + " " + str(workspace_controller.display_panels[0].identifier))
-                        logging.info("display_panels: " + str(workspace_controller.display_panels))
+                        #logging.info("len(workspace_controller.display_panels): " + str(len(workspace_controller.display_panels)))
+                        #logging.info("workspace_controller.display_panels[0]: " + str(workspace_controller.display_panels[0]) + " " + str(workspace_controller.display_panels[0].identifier))
+                        #logging.info("display_panels: " + str(workspace_controller.display_panels))
                         ## list all display panels:
                         #for display_panel in workspace_controller.display_panels:
-                        #    logging.info("display panel identifier: " + str(display_panel.identifier) + " uuid: " + str(display_panel.uuid) + " is_focused: " + str(display_panel.__content_canvas_item.focused))                   
+                        #    logging.info("display panel identifier: " + str(display_panel.identifier) + " uuid: " + str(display_panel.uuid) + " is_focused: " + str(display_panel.__content_canvas_item.focused))
                         command = workspace_controller.insert_display_panel(self, "right")
-                        document_controller.push_undo_command(command) 
-                    logging.info("split_horizontal called")                                  
+                        document_controller.push_undo_command(command)
+                    #logging.info("split_horizontal called")
                     return True
                 split_horizontal()
                 return True
             elif key.text == "d":
                 # delete the current (in focus) display panel (self), NOT the data item displayed therein!
-                logging.info("key d pressed in DisplayPanel._handle_key_pressed")                  
+                #logging.info("key d pressed in DisplayPanel._handle_key_pressed")
                 if workspace_controller:
                     command = workspace_controller.remove_display_panel(self)
-                    document_controller.push_undo_command(command)                                
-                    logging.info("deleted display panel")
+                    document_controller.push_undo_command(command)
+                    #logging.info("deleted display panel")
                 return True
 #            elif key.text == "r": can't get it to work from here, instead added a dummy View Menu item for "Reveal" in DocumentController.py and assigned key_squence "R"
             ###DMH end
@@ -1618,10 +1618,10 @@ class DisplayPanel(CanvasItem.CanvasItemComposition):
         def delete_display_panel():
             if workspace_controller:
                 command = workspace_controller.remove_display_panel(self)
-                document_controller.push_undo_command(command) 
+                document_controller.push_undo_command(command)
 
         menu.add_separator()
-        menu.add_menu_item(_("Split Into Top and Bottom"), split_vertical, key_sequence="t")  # DMH key-sequence in context menu don't seem to work 
+        menu.add_menu_item(_("Split Into Top and Bottom"), split_vertical, key_sequence="t")  # DMH key-sequence in context menu don't seem to work
         menu.add_menu_item(_("Split Into Left and Right"), split_horizontal, key_sequence="h")
         ###DMH 20191114:
         menu.add_menu_item(_("Delete Display Panel"), delete_display_panel, key_sequence="d")
@@ -1955,16 +1955,16 @@ class DisplayPanelManager(metaclass=Utility.Singleton):
         d = {"type": "image", "display-panel-type": display_panel_type}
         #logging.info("switch_to_display_content: display_panel " + str(display_panel.identifier) + " type " + str(display_panel_type) )
         if display_item and display_panel_type != "empty-display-panel":
-            logging.info("switch_to_display_content: has display_item!")
+            #logging.info("switch_to_display_content: has display_item!")
             d["display_item_uuid"] = str(display_item.uuid)
         #logging.info("switch_to_display_content: d: " + str(d))
         command = ReplaceDisplayPanelCommand(document_controller.workspace_controller)
         display_panel.change_display_panel_content(d)
         document_controller.push_undo_command(command)
 
-    ### DMH 20191119: added my own method for clearing all display panels, as I couldn't figure out what to pass as document_controller from DocumentController.py        
+    ### DMH 20191119: added my own method for clearing all display panels, as I couldn't figure out what to pass as document_controller from DocumentController.py
     def clear_display_content(display_panel: DisplayPanel, display_item: DisplayItem.DisplayItem = None):
-        
+
         d = {"type": "image", "display-panel-type": "empty-display-panel"}
         #logging.info("switch_to_display_content: display_panel " + str(display_panel) + " type " + str(display_panel_type) )
         #logging.info("switch_to_display_content: d: " + str(d))

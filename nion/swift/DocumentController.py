@@ -430,7 +430,7 @@ class DocumentController(Window.Window):
             # same as show() in context_menu below
             display_item = self.selected_display_item
             if display_item:
-                logging.info("DocumentController.reveal called, display_item is: " + str(display_item))
+                #logging.info("DocumentController.reveal called, display_item is: " + str(display_item))
                 #selects related data item in data panel:
                 self.select_display_items_in_data_panel([display_item])
         self._view_menu.add_menu_item(_("Reveal"), reveal, key_sequence="r")
@@ -953,7 +953,7 @@ class DocumentController(Window.Window):
 
     def new_window_with_data_item(self, workspace_id, display_item=None):
         # hack to work around Application <-> DocumentController interdependency.
-        logging.info("new_window_with_data_item workspace_id: " + workspace_id)
+        #logging.info("new_window_with_data_item workspace_id: " + workspace_id)
         self.create_new_document_controller_event.fire(self.document_model, workspace_id, display_item)
 
     def __import_folder(self):
@@ -2466,7 +2466,7 @@ class DocumentController(Window.Window):
         if display_item:
 
             def show():
-                logging.info("def show called, display_item: " + str(display_item))
+                #logging.info("def show called, display_item: " + str(display_item))
                 self.select_display_items_in_data_panel([display_item])
 
             # DMH 2019114: added dummy key_sequence so that it shows up in the context menu, BUT this is not working by itself
