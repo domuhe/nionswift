@@ -85,7 +85,6 @@ class DocumentController(Window.Window):
         self.document_model = document_model
         self.document_model.add_ref()
         if app:
-
             workspace_dir = app.workspace_dir
             workspace_name = os.path.splitext(os.path.split(workspace_dir)[1])[0] if workspace_dir else _("Workspace")
             self.title = "{0} SuperSTEM Workspace - {1}".format(_("Nion Swift"), workspace_name)
@@ -130,7 +129,7 @@ class DocumentController(Window.Window):
         #logging.info("DocumentController __init__ - workspace_id = " + str(workspace_id))
         #logging.info("DocumentController __init__ - workspace_name = " + str(workspace_name))
         #logging.info("DocumentController __init__ - workspace_dir= " + str(workspace_dir))
-        
+
         if workspace_id:  # used only when testing reference counting
             self.__workspace_controller = Workspace.Workspace(self, workspace_id)
             self.__workspace_controller.restore(self.document_model.workspace_uuid)
@@ -139,7 +138,8 @@ class DocumentController(Window.Window):
         #logging.info("__workspace_controller" + str(self.__workspace_controller) + " " + str(self.__workspace_controller.display_panels))
         #for disppan in self.__workspace_controller.display_panels:
         #    logging.info("panels " + str(disppan.identifier))
-            
+
+
     def close(self):
         """Close the document controller.
 
@@ -234,7 +234,7 @@ class DocumentController(Window.Window):
         self._processing_menu = self.add_menu(_("Processing"))
 
         self._view_menu = self.add_menu(_("View"))
-        
+
         ### DMH 20191115:
         self._workspace_menu = self.add_menu(_("Workspaces"))
 
@@ -415,17 +415,17 @@ class DocumentController(Window.Window):
         self._display_type_menu = self.create_sub_menu()
         self._display_type_menu.on_about_to_show = about_to_show_display_type_menu
 
-        self._view_menu.add_sub_menu(_("Display Panel Type"), self._display_type_menu)        
+        self._view_menu.add_sub_menu(_("Display Panel Type"), self._display_type_menu)
         self._view_menu.add_separator()
 
         self._view_menu.add_menu_item(_("Display Copy"), self.processing_display_copy)
         self._display_remove_action = self._view_menu.add_menu_item(_("Display Remove"), self.processing_display_remove)
         self._view_menu.add_separator()
 
-        ### DMH 20191114: 
+        ### DMH 20191114:
         # PyQT doesn't seem to have working key-sequences for context menus. Therefore,
         # creating a new menu item under View menu with key-squence "R" for the action to reveal the data panel's related data item in the data panel
-        #           
+        #
         def reveal():
             # same as show() in context_menu below
             display_item = self.selected_display_item
@@ -461,8 +461,8 @@ class DocumentController(Window.Window):
 
         #DMH for testing
         def panel_action():
-            logging.info("panel_action called")                           
-            
+            logging.info("panel_action called")
+
         self._one_to_one_view_action = self._view_menu.add_menu_item(_("1:1 View"), one_to_one_view, key_sequence="1")
         self._two_to_one_view_action = self._view_menu.add_menu_item(_("2:1 View"), two_to_one_view, key_sequence="2")
         self._view_menu.add_separator()
@@ -472,16 +472,16 @@ class DocumentController(Window.Window):
 
         ### DMH 20191119: added method to empty all display panels in workspace:
         def clear_all_display_panels():
-            #logging.info("clearallpanels called")                    
+            #logging.info("clearallpanels called")
             if self.__workspace_controller:
                 for display_panel in self.__workspace_controller.display_panels:
                     #logging.info("clear_all_display_panels called, doing panel: " + str(display_panel))
                     DisplayPanel.DisplayPanelManager.clear_display_content(display_panel, display_panel.display_item)
-                    
-        ### DMH 20191119: added menu item to view menu to clear all display panels in current workspace                    
+
+        ### DMH 20191119: added menu item to view menu to clear all display panels in current workspace
         self._view_menu.add_menu_item(_("Clear ALL Display Panels in Workspace"), clear_all_display_panels, key_sequence="Ctrl+Shift+C")
         ### end DMH
-        self._view_menu.add_separator()        
+        self._view_menu.add_separator()
         self._view_menu.add_menu_item(_("Data Item Recorder..."), self.new_recorder_dialog, key_sequence="Ctrl+Shift+R")
         self._view_menu.add_separator()
 
@@ -497,11 +497,10 @@ class DocumentController(Window.Window):
         self._workspace_menu.add_menu_item(_("Clone Workspace"), self.__clone_workspace, key_sequence="Ctrl+Alt+C")
         self._workspace_menu.add_separator()
 
-                            
+
         # need to use functools.partial to pass extra argument to slot create_xpanels_workspace
         self._1panel_workspace_action = self._workspace_menu.add_menu_item(_("New 1 panel Workspace"), functools.partial(self.__create_xpanels_workspace, 1))
         self._2panel_workspace_action = self._workspace_menu.add_menu_item(_("New 2 panel Workspace"), functools.partial(self.__create_xpanels_workspace, 2))
-        #self._2panel_workspace_action = self._workspace_menu.add_menu_item(_("New 2 panel Workspace"), panel_action)
         self._4panel_workspace_action = self._workspace_menu.add_menu_item(_("New 4 panel Workspace"), functools.partial(self.__create_xpanels_workspace, 4))
         self._9panel_workspace_action = self._workspace_menu.add_menu_item(_("New 9 panel Workspace"), functools.partial(self.__create_xpanels_workspace, 9))
         self._16panel_workspace_action = self._workspace_menu.add_menu_item(_("New 16 panel Workspace"), functools.partial(self.__create_xpanels_workspace, 16))
@@ -509,7 +508,7 @@ class DocumentController(Window.Window):
         self._workspace_menu.add_separator()
         # end DMH
 
-#       ### DMH: moved list of workspaces to workspace menu    
+#       ### DMH: moved list of workspaces to workspace menu
 #        self.__dynamic_view_actions = []
 #
 #        def adjust_view_menu():
@@ -526,8 +525,8 @@ class DocumentController(Window.Window):
 #            data_item = selected_display_panel.data_item if selected_display_panel else None
 #            display_items = self.document_model.get_display_items_for_data_item(data_item) if data_item else list()
 #            self._display_remove_action.enabled = len(display_items) > 1
-            
-        self.__dynamic_workspace_actions = []            
+
+        self.__dynamic_workspace_actions = []
         def adjust_workspace_menu():
             for dynamic_workspace_action in self.__dynamic_workspace_actions:
                 self._workspace_menu.remove_action(dynamic_workspace_action)
@@ -914,7 +913,7 @@ class DocumentController(Window.Window):
             self.selected_display_panel = None
 
 
-                        
+
     @property
     def selected_display_panel(self):
         return self.__weak_selected_display_panel() if self.__weak_selected_display_panel else None
@@ -2245,16 +2244,13 @@ class DocumentController(Window.Window):
     def __create_workspace(self):
         if self.workspace_controller:
             self.workspace_controller.create_workspace()
-    
-    ### DMH 20191115:            
+
+    ### DMH 20191115:
     def __create_xpanels_workspace(self, number_panels):
         #logging.info("__create_xpanels_workspace called")
         if self.workspace_controller:
             #logging.info("__create_xpanels_workspace, no: " + str(number_panels))
             self.workspace_controller.create_xpanels_workspace(number_panels)
-            # update ToolbarPanel.workspace_list_items
-            logging.info("dir(ToolbarPanel.ToolbarPanel" + str(dir(ToolbarPanel.ToolbarPanel)))
-            #notworkingToolbarPanel.ToolbarPanel.update_workspace_list_combobox(self, "new")
 
     def __rename_workspace(self):
         if self.workspace_controller:
@@ -2263,6 +2259,9 @@ class DocumentController(Window.Window):
     def __remove_workspace(self):
         if self.workspace_controller:
             self.workspace_controller.remove_workspace()
+    def __remove_workspace_no_dialog(self):
+        if self.workspace_controller:
+            self.workspace_controller.remove_workspace_no_dialog()
 
     def __clone_workspace(self):
         if self.workspace_controller:
@@ -2448,14 +2447,14 @@ class DocumentController(Window.Window):
                 # set current_workspace to the workspace that has workspace_uuid
                 if workspace.uuid == self.document_model.workspace_uuid:
                     current_workspace = workspace
-                #logging.info("workspace : "  + str(workspace.name) + " " + str(workspace.uuid))                       
+                #logging.info("workspace : "  + str(workspace.name) + " " + str(workspace.uuid))
 
             #logging.info("show_in_new_window current workspace " + str(current_workspace))
             #create new single panel workspace
             self.__create_xpanels_workspace(1)
             # then open selected data item in the new workspace in new window
             self.new_window_with_data_item("data", display_item=display_item)
-            ## change main window back to previous workspace            
+            ## change main window back to previous workspace
             self.workspace_controller.change_workspace(current_workspace)
             ### end DMH
 

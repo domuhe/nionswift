@@ -5,9 +5,10 @@ import weakref
 ###DMh 20191121
 import operator
 import logging
+import uuid
 from nion.utils import Model
 from nion.swift import Workspace
-
+from nion.ui import Dialog
 # third party libraries
 # None
 
@@ -222,15 +223,19 @@ class ToolbarPanel(Panel.Panel):
             elif number_panels == 0:
                 self.update_workspace_list_combobox()
             elif number_panels == 999:
-                document_controller_weak_ref()._deletepanel_workspace_action.trigger()
-                #self.update_workspace_list_combobox("delete")
-            #_update_workspace_list_combobox("new")
-            #self.update_workspace_list_combobox("new")
-            logging.info("workspace_button_action clicked")
+                def confirm_clicked():
+                    if len(self.get_workspace_list()) > 1:
+                        #document_controller_weak_ref()._deletepanel_workspace_action.trigger()
+                        self.document_controller.workspace_controller.remove_workspace_no_dialog()
+                        self.update_workspace_list_combobox()
+
+                confirm_dialog = ConfirmDialog(self.ui)
+                confirm_dialog.on_accept = confirm_clicked
+                confirm_dialog.show()
 
         # define buttons that create new workspaces:
         workspace_update_button = self.ui.create_push_button_widget()
-        workspace_update_button.tool_tip = _("Refresh list of available workspaces")
+        workspace_update_button.tool_tip = _("Refresh list of workspaces after using Workspace menu")
         workspace_update_button.icon = CanvasItem.load_rgba_data_from_bytes(pkgutil.get_data(__name__, "resources/update.png"))
         workspace_update_button.on_clicked = lambda: workspace_button_action(0)
         workspace_delete_button = self.ui.create_push_button_widget()
@@ -263,74 +268,74 @@ class ToolbarPanel(Panel.Panel):
         workspace_20_button.on_clicked = lambda: workspace_button_action(20)
 
         ## DMH: workspace list combobox
-        def _get_workspace_list():
-            """ creates a list of currently available workspaces [(workspace name, workspace uuid)] """
-            workspace_list_items = []
-            for workspace in document_controller.document_model.workspaces:
-                logging.info("get_workspace_list called, workspaces: " + str(workspace.name) + " " + str(workspace.uuid))
-                workspace_list_items.append((str(workspace.name), str(workspace.uuid)))
-            return workspace_list_items
+        # def _get_workspace_list():
+        #     """ creates a list of currently available workspaces [(workspace name, workspace uuid)] """
+        #     workspace_list_items = []
+        #     for workspace in document_controller.document_model.workspaces:
+        #         logging.info("_get_workspace_list called, workspaces: " + str(workspace.name) + " " + str(workspace.uuid))
+        #         workspace_list_items.append((str(workspace.name), str(workspace.uuid)))
+        #     return workspace_list_items
 
-        def _update_workspace_list_combobox(change_type):
-            """ updates workspace_list_items in combobox and changes to relevant workspace
-                depending on whether a workspace was created, deleted, renamed, selected by some external function
-            """
-            # save current selected workspace list item
-            old_workspace_index = self.workspace_list_combobox.current_index
-            # get current workspace_list
-            workspace_list = _get_workspace_list()
-            # get current indexed workspace list
-            workspace_list_indexed = {item[1]: index for index, item in enumerate(workspace_list)}
-            # re-set items in combobox
-            self.workspace_list_combobox.items = workspace_list
-            # change to new workspace
-            if change_type == "new":
-                # change to newly created workspace (a new workspace is added to the end)
-                _change_workspace(workspace_list[-1])
-            elif change_type == "delete":
-                # change to workspace to prior item in the list (this is sure to exist)
-                _change_workspace(workspace_list[old_workspace_index - 1])
-            # set current_index to the item (equals to item with workspace_uuid)
-            self.workspace_list_combobox.current_index = workspace_list_indexed[str(document_controller.document_model.workspace_uuid)]
+        # def _update_workspace_list_combobox(change_type):
+        #     """ updates workspace_list_items in combobox and changes to relevant workspace
+        #         depending on whether a workspace was created, deleted, renamed, selected by some external function
+        #     """
+        #     # save current selected workspace list item
+        #     old_workspace_index = self.workspace_list_combobox.current_index
+        #     # get current workspace_list
+        #     workspace_list = _.get_workspace_list()
+        #     # get current indexed workspace list
+        #     workspace_list_indexed = {item[1]: index for index, item in enumerate(workspace_list)}
+        #     # re-set items in combobox
+        #     self.workspace_list_combobox.items = workspace_list
+        #     # change to new workspace
+        #     if change_type == "new":
+        #         # change to newly created workspace (a new workspace is added to the end)
+        #         _change_workspace(workspace_list[-1])
+        #     elif change_type == "delete":
+        #         # change to workspace to prior item in the list (this is sure to exist)
+        #         _change_workspace(workspace_list[old_workspace_index - 1])
+        #     # set current_index to the item (equals to item with workspace_uuid)
+        #     self.workspace_list_combobox.current_index = workspace_list_indexed[str(document_controller.document_model.workspace_uuid)]
 
-            logging.info("_update_workspace_list_combobox, current_index: " + str(self.workspace_list_combobox.current_index))
-            logging.info("_update_workspace_list_combobox, items: " + str(self.workspace_list_combobox.items))
-            logging.info("_update_workspace_list_combobox, indexed: " + str(workspace_list_indexed))
+            # logging.info("_update_workspace_list_combobox, current_index: " + str(self.workspace_list_combobox.current_index))
+            # logging.info("_update_workspace_list_combobox, items: " + str(self.workspace_list_combobox.items))
+            # logging.info("_update_workspace_list_combobox, indexed: " + str(workspace_list_indexed))
 
-        def _change_workspace(selected_item):                                 # (workspace.name, workspace.uuid)
-            """ changes workspace to selected workspace in combobox (= workspace_list_item)"""
-            logging.info("changed_workspace called, workspace: " + str(selected_item))
-            # Iterate over available workspaces and pick the one that corresponding workspace.name equals workspace_list_item.
-            # Then change workspace to this one.
-            for workspace in document_controller.document_model.workspaces:
-                #logging.info("workspace_changed workspace.uuid: " + str(workspace.uuid) + " workspace_list_item: " + str(workspace_list_item[1]))
-                # workspace uuid is 2nd element of item
-                if str(workspace.uuid) == str(selected_item[1]):
-                    #change workspace
-                    document_controller.workspace_controller.change_workspace(workspace)
+        # def _change_workspace(selected_item):                                 # (workspace.name, workspace.uuid)
+        #     """ changes workspace to selected workspace in combobox (= workspace_list_item)"""
+        #     logging.info("_changed_workspace called, workspace: " + str(selected_item))
+        #     # Iterate over available workspaces and pick the one that corresponding workspace.name equals workspace_list_item.
+        #     # Then change workspace to this one.
+        #     for workspace in document_controller.document_model.workspaces:
+        #         #logging.info("workspace_changed workspace.uuid: " + str(workspace.uuid) + " workspace_list_item: " + str(workspace_list_item[1]))
+        #         # workspace uuid is 2nd element of item
+        #         if str(workspace.uuid) == str(selected_item[1]):
+        #             #change workspace
+        #             document_controller.workspace_controller.change_workspace(workspace)
 
         # create a dictionary with key : index pairs (workspace object: index)
-        #workspace_list_indexed = {item[1]: index for index, item in enumerate(self.get_workspace_list())}
-        workspace_list_indexed = {item[1]: index for index, item in enumerate(ToolbarPanel.static_get_workspace_list(document_controller))}
-        logging.info("workspace_list_indexed: " + str(workspace_list_indexed))
+        workspace_list_indexed = {item[1]: index for index, item in enumerate(self.get_workspace_list())}
+        # works via static method as well
+        #workspace_list_indexed = {item[1]: index for index, item in enumerate(ToolbarPanel.static_get_workspace_list(document_controller))}
+        #logging.info("workspace_list_indexed: " + str(workspace_list_indexed))
         # create drop down list (combobox) with workspace_list_items
         self.workspace_list_combobox = self.ui.create_combo_box_widget(items=self.get_workspace_list(), item_getter=operator.itemgetter(0))
         self.workspace_list_combobox.tool_tip = _("Select Workspace")
-        logging.info("combobox created object: " + str(self.workspace_list_combobox))
+        #logging.info("combobox created object: " + str(self.workspace_list_combobox))
         # set the current selected workspace in drop down list as current index if we have a list of workspaces
         if self.workspace_list_combobox.current_index is not None:
             self.workspace_list_combobox.current_index = workspace_list_indexed[str(document_controller.document_model.workspace_uuid)]
-        logging.info("current_index: " + str(self.workspace_list_combobox.current_index))
+        #logging.info("current_index: " + str(self.workspace_list_combobox.current_index))
         # change workspace when drop down selection changes:
-        #workspace_list_combobox.on_current_item_changed = _change_workspace
         self.workspace_list_combobox.on_current_item_changed = self.change_workspace
-        logging.info("workspace_list_combobox.items " + str( self.workspace_list_combobox.items))
+        #logging.info("workspace_list_combobox.items " + str( self.workspace_list_combobox.items))
 
         ## DMH 20191115: create workspace list and group widgets
         workspace_list_widget = self.ui.create_row_widget()
         workspace_list_widget.add(ui.create_label_widget(_("Workspace:"), properties={"width": 85}))
         workspace_list_widget.add(self.workspace_list_combobox)
-        logging.info("workspace_list_widget row_widget created ----------- object: " + str(workspace_list_widget))
+        #logging.info("workspace_list_widget row_widget created ----------- object: " + str(workspace_list_widget))
         workspace_list_widget.add(workspace_update_button)
         workspace_list_widget.add(workspace_delete_button)
         workspace_group_widget = self.ui.create_row_widget()
@@ -364,25 +369,21 @@ class ToolbarPanel(Panel.Panel):
 
 
 
-    # these are instance methods:
-    #works
+    # instance methods:
     def get_workspace_list(self):
         """ creates a list of currently available workspaces [(workspace name, workspace uuid)] """
         workspace_manager = Workspace.WorkspaceManager()
-        logging.info("panelids " + str(workspace_manager.panel_ids))
         workspace_list_items = []
         for workspace in self.document_controller.document_model.workspaces:
-            logging.info("get_workspace_list called, workspaces: " + str(workspace.name) + " " + str(workspace.uuid))
+            #logging.info("get_workspace_list called, workspaces: " + str(workspace.name) + " " + str(workspace.uuid))
             workspace_list_items.append((str(workspace.name), str(workspace.uuid)))
         return workspace_list_items
 
-
-    #works
     def change_workspace(self, selected_item):                                 # (workspace.name, workspace.uuid)
         """ changes workspace to selected workspace in combobox (= selected_item)"""
-        logging.info("changed_workspace called, workspace: " + str(selected_item))
+        #logging.info("change_workspace called, workspace: " + str(selected_item))
         # DC.DM.workspaces is a list with the workspace objects
-        logging.info("DC.DM.workspaces: " + str(self.document_controller.document_model.workspaces))
+        #logging.info("DC.DM.workspaces: " + str(self.document_controller.document_model.workspaces))
         # Iterate over available workspaces and pick the one that corresponding workspace.name equals workspace_list_item.
         # Then change workspace to this one.
         for workspace in self.document_controller.document_model.workspaces:
@@ -407,17 +408,16 @@ class ToolbarPanel(Panel.Panel):
         workspace_list_indexed = {item[1]: index for index, item in enumerate(workspace_list)}
         # re-set items in combobox to new workspace list
         self.workspace_list_combobox.items = workspace_list
-        logging.info("update_workspace_list_combobox oldidx: " + str(old_workspace_index) + " oldlen: " + str(len(old_workspace_list)) + " newlen " + str(len(workspace_list)))
+        #logging.info("update_workspace_list_combobox oldidx: " + str(old_workspace_index) + " oldlen: " + str(len(old_workspace_list)) + " newlen " + str(len(workspace_list)))
 
         # change to new workspace
         if len(old_workspace_list) < len(workspace_list):
-        #if change_type == "new":
             # a new workspace is added to the end
             self.change_workspace(workspace_list[-1])
+        # change to previous workspace in list when removing a workspace
         elif len(old_workspace_list) > len(workspace_list):
-        #change_type == "delete":
             # change to workspace to item in the list (this is sure to exist)
-            logging.info("update workspace list oldlen > newlen")
+            #logging.info("update workspace list oldlen > newlen")
             self.change_workspace(workspace_list[old_workspace_index - 1])
         else:
             # renamed workspace: don't have to changed current index
@@ -425,17 +425,14 @@ class ToolbarPanel(Panel.Panel):
         # set current_index to the item (equals to item with workspace_uuid)
         self.workspace_list_combobox.current_index = workspace_list_indexed[str(self.document_controller.document_model.workspace_uuid)]
 
-        logging.info("update_workspace_list_combobox, current_index: " + str(self.workspace_list_combobox.current_index))
-        logging.info("update_workspace_list_combobox, items: " + str(self.workspace_list_combobox.items))
-        logging.info("update_workspace_list_combobox, indexed: " + str(workspace_list_indexed))
-
-
-
+        #logging.info("update_workspace_list_combobox, current_index: " + str(self.workspace_list_combobox.current_index))
+        #logging.info("update_workspace_list_combobox, items: " + str(self.workspace_list_combobox.items))
+        #logging.info("update_workspace_list_combobox, indexed: " + str(workspace_list_indexed))
 
     def static_get_workspace_list(document_controller):
         """ creates a list of currently available workspaces [(workspace name, workspace uuid)] """
         workspace_manager = Workspace.WorkspaceManager()
-        logging.info("panelids " + str(workspace_manager.panel_ids))
+        #logging.info("panel ids " + str(workspace_manager.panel_ids))
         workspace_list_items = []
         for workspace in document_controller.document_model.workspaces:
             logging.info("static_get_workspace_list called, workspaces: " + str(workspace.name) + " " + str(workspace.uuid))
@@ -445,3 +442,20 @@ class ToolbarPanel(Panel.Panel):
     def close(self):
         self.__tool_mode_changed_event_listener.close()
         self.__tool_mode_changed_event_listener = None
+
+class ConfirmDialog(Dialog.OkCancelDialog):
+    def __init__(self, ui):
+        super(ConfirmDialog, self).__init__(ui, ok_title=_("Confirm Remove Current Workspace"))
+
+        title_row = self.ui.create_row_widget()
+        title_row.add_spacing(13)
+        title_row.add(self.ui.create_label_widget(_("Remove current workspace? "), properties={"font": "bold"}))
+        title_row.add_stretch()
+        title_row.add_spacing(13)
+
+        column = self.ui.create_column_widget()
+        column.add_spacing(12)
+        column.add(title_row)
+        column.add_stretch()
+
+        self.content.add(column)

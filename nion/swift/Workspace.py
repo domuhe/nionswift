@@ -287,13 +287,13 @@ class Workspace:
 
     def change_workspace(self, workspace: WorkspaceLayout.WorkspaceLayout) -> None:
         command = Workspace.ChangeWorkspaceCommand(self, workspace)
-        logging.info("change_workspace in Workspace called " + str(command))
+        #logging.info("change_workspace in Workspace called " + str(command))
         command.perform()
         self.document_controller.push_undo_command(command)
 
     def _change_workspace(self, workspace: WorkspaceLayout.WorkspaceLayout) -> None:
         assert workspace is not None
-        logging.info("_change_workspace in Workspace called")
+        #logging.info("_change_workspace in Workspace called")
         # save the current workspace
         if self.__workspace:
             self.__sync_layout()
@@ -340,7 +340,7 @@ class Workspace:
                 self.image_row.add(canvas_widget)
         self.document_controller.selected_display_panel = selected_display_panel
         document_model.workspace_uuid = workspace.uuid
-        
+
 
     def restore(self, workspace_uuid):
         """
@@ -486,6 +486,7 @@ class Workspace:
             old_workspace = self.__workspace_controller._workspace
             self.__workspace_controller.change_to_previous_workspace()
             self.__workspace_controller.document_model.remove_workspace(old_workspace)
+            logging.info("Have removed workspace %s", old_workspace.name)
 
         def _undo(self) -> None:
             new_workspace = self.__workspace_controller.new_workspace(name=self.__old_name, layout=self.__old_layout, workspace_id=self.__old_workspace_id, index=self.__old_workspace_index)
@@ -609,18 +610,18 @@ class Workspace:
     ### DMH 20191115: added function that creates workspaces with pre-defined layouts
     def create_xpanels_workspace(self,number_panels) -> None:
         """ Creates a new workspace with number_panels empty display panels  """
-        
+
         # returns string value of uuid for use in the layout definitions
         def ran_uuid():
             return str(uuid.uuid1())
-    
+
         # return 2-letter random letter combination for unique name of the new workspace
         def ran_identifier():
             return "".join([random.choice(string.ascii_uppercase) for _ in range(2)])
-        
+
         #logging.info("workspace create xpanels workspace called, no: " + str(number_panels))
         #logging.info("myuuid: " + ran_uuid() + " myidentifier: " + ran_identifier())
-        
+
         # pre-defined workspace layouts:
         if number_panels == 1:
             d = {"type": "image", "uuid": ran_uuid(), "identifier": ran_identifier(), "selected": True}
@@ -632,78 +633,78 @@ class Workspace:
         elif number_panels == 4:
             d = {"type": "splitter", "orientation": "horizontal", "splits": [0.5, 0.5], "children": [
                 {"type": "splitter", "orientation": "vertical", "splits": [0.5, 0.5], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid(),  "selected": True}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid(),  "selected": True},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.5, 0.5], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}]} 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}]}
         elif number_panels == 9:
             d = {"type": "splitter", "orientation": "horizontal", "splits": [0.33, 0.34, 0.33], "children": [
                 {"type": "splitter", "orientation": "vertical", "splits": [0.33, 0.34, 0.33], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid(),  "selected": True}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid(),  "selected": True},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.33, 0.34, 0.33], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.33, 0.34, 0.33], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}]}    
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}]}
         elif number_panels == 16:
             d = {"type": "splitter", "orientation": "horizontal", "splits": [0.25, 0.25, 0.25, 0.25], "children": [
                 {"type": "splitter", "orientation": "vertical", "splits": [0.25, 0.25, 0.25, 0.25], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid(),  "selected": True}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid(),  "selected": True},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.25, 0.25, 0.25, 0.25], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.25, 0.25, 0.25, 0.25], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.25, 0.25, 0.25, 0.25], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
                 {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}]}
         elif number_panels == 20:
             d = {"type": "splitter", "orientation": "horizontal", "splits": [0.25, 0.25, 0.25, 0.25], "children": [
                 {"type": "splitter", "orientation": "vertical", "splits": [0.2, 0.2, 0.2, 0.2, 0.2], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid(),  "selected": True}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},                 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid(),  "selected": True},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.2, 0.2, 0.2, 0.2, 0.2], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}, 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.2, 0.2, 0.2, 0.2, 0.2], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},                 
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]},
                 {"type": "splitter", "orientation": "vertical", "splits": [0.2, 0.2, 0.2, 0.2, 0.2], "children": [
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}, 
-                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}]}  
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()},
+                {"type": "image", "identifier": ran_identifier(), "uuid": ran_uuid()}]}]}
         else:
                 # fall back to a single panel
                 d = {"type": "image", "uuid": ran_uuid(), "identifier": ran_identifier(), "selected": True}
                 logging.info("chosen number of panels undefined in create_xpanels_workspace - fallback to a single panel")
-    
+
         # create workspace by hand: (see below how to create it with undo functionality)
         #workspace = self.new_workspace("#" + str(number_panels) + "_" + "".join([random.choice(string.ascii_lowercase) for _ in range(2)]),d)
         #self.change_workspace(workspace)
@@ -711,14 +712,15 @@ class Workspace:
         #logging.info("new workspace uuid: " + str(workspace.uuid))
         #logging.info("workspace layout: " + str(workspace.layout))
         #logging.info("workspace name: " + str(workspace.name))
-    
+
         # name for new workspace
         name = "#" + str(number_panels) + "_" + "".join([random.choice(string.ascii_lowercase) for _ in range(2)])
         # create new workspace and prepare undo
         command = Workspace.CreateXPanelsWorkspaceCommand(self, name, d, number_panels)
         command.perform()
-        self.document_controller.push_undo_command(command)   
-    
+        logging.info("Have created workspace %s", name)
+        self.document_controller.push_undo_command(command)
+
     def rename_workspace(self) -> None:
         """ Pose a dialog to rename the workspace. """
 
@@ -740,10 +742,24 @@ class Workspace:
                 command = Workspace.RemoveWorkspaceCommand(self)
                 command.perform()
                 self.document_controller.push_undo_command(command)
+                #logging.info("Have removed workespace")
 
         caption = _("Remove workspace named '{0}'?").format(self.__workspace.name)
         self.pose_confirmation_message_box(caption, confirm_clicked, accepted_text=_("Remove Workspace"),
                                            message_box_id="remove_workspace")
+    # DMH
+    def remove_workspace_no_dialog(self):
+        """ remove workspace. """
+
+        if len(self.document_model.workspaces) > 1:
+            command = Workspace.RemoveWorkspaceCommand(self)
+            command.perform()
+            self.document_controller.push_undo_command(command)
+            #logging.info("Have DIRECTLY removed workespace")
+
+        #logging.info("Workspace remove_workspace_no_dialog")
+
+
 
     def clone_workspace(self) -> None:
         """ Pose a dialog to name and clone a workspace. """
