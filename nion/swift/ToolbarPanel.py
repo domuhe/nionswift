@@ -24,15 +24,6 @@ from nion.utils import Geometry
 _ = gettext.gettext
 
 
-
-#class MyComboBoxWidget(UserInterface.ComboBoxWidget):
-
-    #popupAboutToBeShown = QtCore.pyqtSignal()
-
-    #def showPopup(self):
-    #    self.popupAboutToBeShown.emit()
-    #    super(ComboBox, self).showPopup()
-
 class ToolbarPanel(Panel.Panel):
 
 
@@ -267,52 +258,6 @@ class ToolbarPanel(Panel.Panel):
         workspace_20_button.icon = CanvasItem.load_rgba_data_from_bytes(pkgutil.get_data(__name__, "resources/20panel.png"))
         workspace_20_button.on_clicked = lambda: workspace_button_action(20)
 
-        ## DMH: workspace list combobox
-        # def _get_workspace_list():
-        #     """ creates a list of currently available workspaces [(workspace name, workspace uuid)] """
-        #     workspace_list_items = []
-        #     for workspace in document_controller.document_model.workspaces:
-        #         logging.info("_get_workspace_list called, workspaces: " + str(workspace.name) + " " + str(workspace.uuid))
-        #         workspace_list_items.append((str(workspace.name), str(workspace.uuid)))
-        #     return workspace_list_items
-
-        # def _update_workspace_list_combobox(change_type):
-        #     """ updates workspace_list_items in combobox and changes to relevant workspace
-        #         depending on whether a workspace was created, deleted, renamed, selected by some external function
-        #     """
-        #     # save current selected workspace list item
-        #     old_workspace_index = self.workspace_list_combobox.current_index
-        #     # get current workspace_list
-        #     workspace_list = _.get_workspace_list()
-        #     # get current indexed workspace list
-        #     workspace_list_indexed = {item[1]: index for index, item in enumerate(workspace_list)}
-        #     # re-set items in combobox
-        #     self.workspace_list_combobox.items = workspace_list
-        #     # change to new workspace
-        #     if change_type == "new":
-        #         # change to newly created workspace (a new workspace is added to the end)
-        #         _change_workspace(workspace_list[-1])
-        #     elif change_type == "delete":
-        #         # change to workspace to prior item in the list (this is sure to exist)
-        #         _change_workspace(workspace_list[old_workspace_index - 1])
-        #     # set current_index to the item (equals to item with workspace_uuid)
-        #     self.workspace_list_combobox.current_index = workspace_list_indexed[str(document_controller.document_model.workspace_uuid)]
-
-            # logging.info("_update_workspace_list_combobox, current_index: " + str(self.workspace_list_combobox.current_index))
-            # logging.info("_update_workspace_list_combobox, items: " + str(self.workspace_list_combobox.items))
-            # logging.info("_update_workspace_list_combobox, indexed: " + str(workspace_list_indexed))
-
-        # def _change_workspace(selected_item):                                 # (workspace.name, workspace.uuid)
-        #     """ changes workspace to selected workspace in combobox (= workspace_list_item)"""
-        #     logging.info("_changed_workspace called, workspace: " + str(selected_item))
-        #     # Iterate over available workspaces and pick the one that corresponding workspace.name equals workspace_list_item.
-        #     # Then change workspace to this one.
-        #     for workspace in document_controller.document_model.workspaces:
-        #         #logging.info("workspace_changed workspace.uuid: " + str(workspace.uuid) + " workspace_list_item: " + str(workspace_list_item[1]))
-        #         # workspace uuid is 2nd element of item
-        #         if str(workspace.uuid) == str(selected_item[1]):
-        #             #change workspace
-        #             document_controller.workspace_controller.change_workspace(workspace)
 
         # create a dictionary with key : index pairs (workspace object: index)
         workspace_list_indexed = {item[1]: index for index, item in enumerate(self.get_workspace_list())}
